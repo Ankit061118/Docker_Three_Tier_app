@@ -1,0 +1,73 @@
+create a database folder
+inside which there is dockerfile of mysql
+
+FROM mysql:latest
+
+ENV MYSQL_ROOT_PASSWORD= mysql123
+ENV MYSQL_DATABASE=school
+
+EXPOSE 3608
+
+VOLUME /var/lib/mysql
+
+CMD ['mysqld']
+
+
+after create a network named three-tier-network by using docker network create three-tier-network
+
+then create a volume name mysql-volume using command docker volume create mysql-volume
+
+then build mysql image from docker file
+
+docker build -t mysql-image database/
+                image-name
+
+then build container
+ docker run --name mysql-container -d -p 3306:3306 --network three-tier-network -v mysql-data:/var/lib/mysql mysql-image
+                    container name     port                                      volume vol-name             image_name
+
+then backend docker file 
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3500
+
+CMD ["node", "server.js"]
+
+  
+
+run docker build -t backend backend/
+                -t =tag backend=image_name backend/=location  
+
+make backend container
+docker run --name backend-container -d -p 3500:3500 --network three-tier-network backend  
+
+
+now make docker file for frontend in frontend folder
+
+ FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+ARG REACT_APP_API_BASE_URL 
+ENV REACT_APP_API_BASE_URL = $REACT_APP_API_BASE_URL
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npx","serve", "-s","build","-l","3000"]
+
+docker build -t frontend --build-arg REACT_APP_API_BASE_URL=http://localhost:3500 frontend/
+                                                             backendport=3500

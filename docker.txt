@@ -23,7 +23,7 @@ docker build -t mysql-image database/
                 image-name
 
 then build container
- docker run --name mysql-container -d -p 3306:3306 --network three-tier-network -v mysql-data:/var/lib/mysql mysql-image
+ docker run --name mysql-container -d -p 3307:3307 --network three-tier-network -v mysql-data:/var/lib/mysql mysql-image
                     container name     port                                      volume vol-name             image_name
 
 then backend docker file 
@@ -70,4 +70,52 @@ EXPOSE 3000
 CMD ["npx","serve", "-s","build","-l","3000"]
 
 docker build -t frontend --build-arg REACT_APP_API_BASE_URL=http://localhost:3500 frontend/
-                                                             backendport=3500
+                                                              backendport=3500
+after create image
+
+create container 
+ docker run -d --name frontend-container --network three-tier-network -p 80:3000 frontend
+ 
+ End
+
+
+
+
+ 
+ part 2
+ Using lower image
+after that docker file image size is decreased
+
+Frontend/dockerfile
+
+# smaller image size
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
+
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN npm install -g serve
+
+COPY --from=builder /app/build ./build
+
+EXPOSE 3000
+
+CMD ["serve", "-s", "build", "-l", "3000"]
+ 
+
